@@ -1,4 +1,4 @@
-if ($app.env === $env.widget) {
+if ($app.env == $env.widget) {
     const widget = require("./scripts/widget");
     widget.init();
   } else {

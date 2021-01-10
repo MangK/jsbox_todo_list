@@ -1,5 +1,4 @@
 exports.init = () => {
-    var extensions = $cache.get("extensions") || []
     $ui.render({
         props: {
             title: "Todo List"
@@ -24,7 +23,7 @@ exports.init = () => {
                         layout: function (make, view) {
                             make.left.equalTo(10)
                             make.bottom.equalTo(-40)
-                            make.size.equalTo($size(($device.info.screen.width) / 2 - 15,40))
+                            make.size.equalTo($size(($device.info.screen.width) / 2 - 15, 40))
                         },
                         events: {
                             tapped: function (sender) {
@@ -41,7 +40,7 @@ exports.init = () => {
                         layout: function (make) {
                             make.left.inset(($device.info.screen.width) / 2 + 5)
                             make.bottom.equalTo(-40)
-                            make.size.equalTo($size(($device.info.screen.width) / 2 - 15,40))
+                            make.size.equalTo($size(($device.info.screen.width) / 2 - 15, 40))
                         },
                         events: {
                             tapped: function (sender) {
@@ -61,7 +60,13 @@ exports.init = () => {
                                     handler: function (sender, indexPath) {
                                         deleteItem(indexPath)
                                     }
-                                }
+                                },
+                                {
+                                    title: "完成",
+                                    handler: function (sender, indexPath) {
+                                        // deleteItem(indexPath)
+                                    }
+                                },
                             ]
                         },
                         layout: function (make) {
@@ -73,7 +78,6 @@ exports.init = () => {
                             //点击
                             didSelect: function (sender, indexPath, title) {
                                 console.log(title)
-                                // $app.openExtension(title)
                             },
                             //移动
                             reorderMoved: function (from, to) {
@@ -90,17 +94,30 @@ exports.init = () => {
         ]
     })
 
+    //初始化
+    var extensions = $cache.get("extensions") || []
+    var query = $context.query
+    console.log(query)
     var listView = $("list")
-    listView.data = extensions
-
+    listView.data = (() => {
+        const result = [];
+        for (let idx = 0; idx < extensions.length; ++idx) {
+            result.push(extensions[idx].data);
+        }
+        return result;
+    })()
+    
     //插入元素
     function insertItem(text) {
-        extensions.unshift(text)
+        var obj = {
+            data: text,
+            time: new Date().getTime()
+        }
+        extensions.unshift(obj)
         listView.insert({
             index: 0,
-            value: text
+            value: obj.data
         })
-        console.log("insert+")
         saveItems()
     }
 
