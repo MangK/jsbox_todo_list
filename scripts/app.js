@@ -6,82 +6,105 @@ exports.init = () => {
         },
         views: [
             {
-                type: "button",
+                type: "view",
                 props: {
-                    title: "输入"
+                    bgcolor: $color("#ccc12c")
                 },
-                layout: function (make) {
-                    make.left.inset(10)
-                    make.top.inset(10)
-                    make.size.equalTo($size(($device.info.screen.width) / 2 - 15, 50))
+                layout: function (make, view) {
+                    make.center.equalTo(view.super)
+                    make.left.bottom.right.equalTo(0)
                 },
-                events: {
-                    tapped: function (sender) {
-                        keybordInsertItem()
-                    }
-                }
-            },
-            {
-                type: "button",
-                props: {
-                    title: "语音"
-                },
-                layout: function (make) {
-                    make.left.inset(($device.info.screen.width) / 2 + 5)
-                    make.top.inset(10)
-                    make.size.equalTo($size(($device.info.screen.width) / 2 - 15, 50))
-                },
-                events: {
-                    tapped: function (sender) {
-                        voiceInsertItem()
-                    }
-                }
-            },
-            {
-                type: "list",
-                props: {
-                    id: "list",
-                    reorder: true,
-                    actions: [
-                        {
-                            title: "delete",
-                            handler: function (sender, indexPath) {
-                                deleteItem(indexPath)
+                views: [
+                    {
+                        id: "inputButton",
+                        type: "button",
+                        props: {
+                            title: "输入"
+                        },
+                        layout: function (make, view) {
+                            make.left.equalTo(10)
+                            make.bottom.equalTo(-40)
+                            make.size.equalTo($size(($device.info.screen.width) / 2 - 15,40))
+                        },
+                        events: {
+                            tapped: function (sender) {
+                                keybordInsertItem()
                             }
                         }
-                    ]
-                },
-                layout: function (make) {
-                    make.left.bottom.right.equalTo(0)
-                    make.top.equalTo($("button").bottom).offset(10)
-                },
-                events: {
-                    didSelect: function (sender, indexPath, title) {
-                        $app.openExtension(title)
                     },
-                    reorderMoved: function (from, to) {
-                        extensions.move(from.row, to.row)
+                    {
+                        id: "voiceButton",
+                        type: "button",
+                        props: {
+                            title: "语音"
+                        },
+                        layout: function (make) {
+                            make.left.inset(($device.info.screen.width) / 2 + 5)
+                            make.bottom.equalTo(-40)
+                            make.size.equalTo($size(($device.info.screen.width) / 2 - 15,40))
+                        },
+                        events: {
+                            tapped: function (sender) {
+                                voiceInsertItem()
+                            }
+                        }
                     },
-                    reorderFinished: function () {
-                        saveItems()
-                    }
-                }
-            }
+                    {
+                        type: "list",
+                        props: {
+                            id: "list",
+                            reorder: true,
+                            bgcolor: $color("#cccccc"),
+                            actions: [
+                                {
+                                    title: "delete",
+                                    handler: function (sender, indexPath) {
+                                        deleteItem(indexPath)
+                                    }
+                                }
+                            ]
+                        },
+                        layout: function (make) {
+                            make.left.right.equalTo(0)
+                            make.top.equalTo(0)
+                            make.bottom.equalTo(-90)
+                        },
+                        events: {
+                            //点击
+                            didSelect: function (sender, indexPath, title) {
+                                console.log(title)
+                                // $app.openExtension(title)
+                            },
+                            //移动
+                            reorderMoved: function (from, to) {
+                                extensions.move(from.row, to.row)
+                            },
+                            //？？重载
+                            reorderFinished: function () {
+                                saveItems()
+                            }
+                        }
+                    },
+                ]
+            },
         ]
     })
 
     var listView = $("list")
     listView.data = extensions
 
+    //插入元素
     function insertItem(text) {
         extensions.unshift(text)
         listView.insert({
             index: 0,
             value: text
         })
+        console.log("insert+")
         saveItems()
     }
 
+    //删除元素
     function deleteItem(indexPath) {
         var text = extensions[indexPath.row]
         var index = extensions.indexOf(text)
@@ -91,25 +114,13 @@ exports.init = () => {
         }
     }
 
+    //手动输入
     function keybordInsertItem() {
         $ui.push({
             props: {
-                title: "所有扩展"
+                title: "新建"
             },
             views: [
-                {
-                    type: "list",
-                    props: {
-                        data: $file.extensions
-                    },
-                    layout: $layout.fill,
-                    events: {
-                        didSelect: function (sender, indexPath, title) {
-                            insertItem(title)
-                            $ui.pop()
-                        }
-                    }
-                },
                 {
                     type: "input",
                     props: {
@@ -119,27 +130,32 @@ exports.init = () => {
                         align: $align.left
                     },
                     layout: function (make, view) {
-                        // make.center.equalTo(view.super)
                         make.size.equalTo($size($device.info.screen.width, 100))
                     },
                     events: {
-                        returned: function(sender) {
-                            console.log(sender.text)
+                        returned: function (sender) {
+                            insertItem(sender.text)
+                            $ui.pop()
                         }
                     },
                 },
             ]
         })
     }
+
+    //语音输入
     function voiceInsertItem() {
         $input.speech({
             locale: "zh-CN", // 可选
-            autoFinish: true, // 可选
+            autoFinish: false, // 可选
             handler: function (text) {
+                insertItem(text)
+                $ui.pop()
             }
         })
     }
 
+    //将内容加入缓存
     function saveItems() {
         $cache.set("extensions", extensions)
     }
